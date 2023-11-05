@@ -1,7 +1,9 @@
+import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:mvm/res/component/round_button.dart';
-import 'package:mvm/utils/utils.dart';
+import 'package:mvm/view/home_screen.dart';
 import 'package:mvm/view_model/auth_view_model.dart';
+import 'package:mvm/view_model/todo_view_model.dart';
 import 'package:provider/provider.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -19,6 +21,8 @@ class _LoginScreenState extends State<LoginScreen> {
       TextEditingController(text: "cityslicka");
   FocusNode emailFocus = FocusNode();
   FocusNode passwordFocus = FocusNode();
+  bool vis = true;
+  final formKey = GlobalKey<FormState>();
 
   @override
   void dispose() {
@@ -37,67 +41,70 @@ class _LoginScreenState extends State<LoginScreen> {
       appBar: AppBar(
         title: Text("data"),
       ),
-      body: Column(children: [
-        TextFormField(
-          controller: emailcontroller,
-          keyboardType: TextInputType.emailAddress,
-          focusNode: emailFocus,
-          decoration: const InputDecoration(
-            labelText: "Email",
-            hintText: "Enter Email",
-            prefix: Icon(Icons.email),
-          ),
-          onFieldSubmitted: (value) {
-            Utils.filedFocusChange(context, emailFocus, passwordFocus);
-          },
-        ),
-        ValueListenableBuilder(
-          valueListenable: _obsecurePassword,
-          builder: (context, value, child) {
-            return TextFormField(
-              controller: passwordcontroller,
-              obscureText: _obsecurePassword.value,
-              focusNode: passwordFocus,
-              obscuringCharacter: "*",
-              keyboardType: TextInputType.emailAddress,
-              decoration: InputDecoration(
-                  labelText: "Password",
-                  hintText: "Enter Password",
-                  prefixIcon: Icon(Icons.lock),
-                  suffixIcon: InkWell(
-                    onTap: () {
-                      _obsecurePassword.value = !_obsecurePassword.value;
-                    },
-                    child: Icon(_obsecurePassword.value
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility),
-                  )),
-            );
-          },
-        ),
-        RoundButton(
-          title: "Login",
-          onpresed: () {
-            passwordFocus.unfocus();
-            if (emailcontroller.text.isEmpty) {
-              // Utils.showSnackbar(context, 'Please Enter Email');
-              Utils.flushBarErrorMessage("Please Enter Email", context);
-            } else if (passwordcontroller.text.isEmpty) {
-              Utils.showSnackbar(context, 'Please Enter Password');
-            } else if (passwordcontroller.text.length < 6) {
-              Utils.showSnackbar(context, 'Please Enter 6 Digit Password');
-            } else {
-              Map data = {
-                "email": emailcontroller.text.trim().toString(),
-                "password": passwordcontroller.text.trim().toString()
-              };
+      body: SingleChildScrollView(
+        child: Form(
+          key: formKey,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(children: [
+              Text("Log In"),
+              (authViewModel.error != "")
+                  ? Text(
+                      authViewModel.error,
+                      style: const TextStyle(color: Colors.red),
+                    )
+                  : const SizedBox(),
+              TextFormField(
+                controller: emailcontroller,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return "Email address is required!";
+                  }
 
-              authViewModel.loginApi(context, data);
-              print('Api Hit');
-            }
-          },
+                  if (!EmailValidator.validate(value.trim())) {
+                    return "Invalid email address";
+                  }
+
+                  return null;
+                },
+                decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(7)),
+                    labelText: "Email Address"),
+              ),
+              SizedBox(height: 10.0),
+              TextFormField(
+                  controller: passwordcontroller,
+                  obscureText: true,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return "Password is required!";
+                    }
+                    return null;
+                  },
+                  decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(7)),
+                      labelText: "Password")),
+              SizedBox(height: 50),
+              RoundButton(
+                title: "Login",
+                // loading: authViewModel.loading,
+                onpresed: () {
+                  passwordFocus.unfocus();
+                  if (!formKey.currentState!.validate()) return;
+                  Map data = {
+                    "email": emailcontroller.text.trim().toString(),
+                    "password": passwordcontroller.text.trim().toString()
+                  };
+                  print('Api Hit');
+                  authViewModel.loginApi(context, data);
+                },
+              ),
+            ]),
+          ),
         ),
-      ]),
+      ),
     );
   }
 }

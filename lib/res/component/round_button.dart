@@ -6,7 +6,7 @@ class RoundButton extends StatelessWidget {
   final bool? loading;
   final VoidCallback? onpresed;
   const RoundButton(
-      {this.title, this.loading = false, this.onpresed, super.key});
+      {required this.title, this.loading = false, this.onpresed, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -20,10 +20,13 @@ class RoundButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(10.0)),
         child: Center(
           child: loading!
-              ? CircleAvatar()
+              ? const Text(
+                  "Login...",
+                  style:  TextStyle(color: AppColors.whiteColor),
+                )
               : Text(
                   title!,
-                  style: TextStyle(color: AppColors.whiteColor),
+                  style: const TextStyle(color: AppColors.whiteColor),
                 ),
         ),
       ),
